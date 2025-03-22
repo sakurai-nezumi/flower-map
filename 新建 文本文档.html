@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>南师大仙林校区赏花地图</title>
+    <style>
+        #container {
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 优化后的花朵动画 */
+        .flower {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background: #FFB6C1;
+            border-radius: 50% 50% 0 50%;
+            transform: rotate(45deg);
+            animation: fall 8s linear infinite;
+            box-shadow: 0 0 8px #FF69B4;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg) scale(0.8);
+            }
+            100% {
+                transform: translateY(110vh) rotate(720deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* 美化标记点 */
+        .amap-marker {
+            filter: drop-shadow(0 0 6px #ff69b4);
+        }
+    </style>
+    <script>
+        window._AMapSecurityConfig = {
+            securityJsCode: "a460c0a4e3150dcff2f2b0204c19688b"
+        };
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=cf496a50221d940fd35a016b9ad60e44"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div id="container"></div>
+
+    <script>
+        // 初始化配置
+        const CONFIG = {
+            center: [118.8375, 32.0785], // 南师大仙林校区中心坐标
+            zoom: 17,
+            mapStyle: 'amap://styles/c06c02e7b62f72d616028a91c60deeac',
+            flowerSpots: [
+                {
+                    name: "学明楼旁樱花",
+                    type: "樱花",
+                    period: "3-4月",
+                    pos: [118.8370, 32.0790],
+                    images: [
+                        "https://dummyimage.com/300x200/ff0000/ffffff&text=樱花1",
+                        "https://dummyimage.com/300x200/ff1100/ffffff&text=樱花2"
+                    ]
+                },
+                {
+                    name: "敬文图书馆前牡丹",
+                    type: "牡丹",
+                    period: "4-5月",
+                    pos: [118.8380, 32.0792],
+                    images: [
+                        "https://dummyimage.com/300x200/00ff00/ffffff&text=牡丹1",
+                        "https://dummyimage.com/300x200/11ff00/ffffff&text=牡丹2"
+                    ]
+                },
+                {
+                    name: "西区食堂附近郁金香",
+                    type: "郁金香",
+                    period: "4-5月",
+                    pos: [118.8365, 32.0788],
+                    images: [
+                        "https://dummyimage.com/300x200/0000ff/ffffff&text=郁金香1",
+                        "https://dummyimage.com/300x200/0011ff/ffffff&text=郁金香2"
+                    ]
+                }
+            ],
+            poems: {
+                '樱花': [
+                    '小园新种红樱树，闲绕花行便当游。——白居易',
+                    '樱花烂漫几多时？柳绿桃红两未知。——苏曼殊'
+                ],
+                '牡丹': [
+                    '唯有牡丹真国色，花开时节动京城。——刘禹锡',
+                    '云想衣裳花想容，春风拂槛露华浓。——李白'
+                ],
+                '郁金香': [
+                    '兰陵美酒郁金香，玉碗盛来琥珀光。——李白',
+                    '郁金香汗裛歌巾，山石榴花染舞裙。——白居易'
+                ]
+            }
+        };
+
+        // 初始化地图
+        const map = new AMap.Map('container', {
+            center: CONFIG.center,
+            zoom: CONFIG.zoom,
+            mapStyle: CONFIG.mapStyle,
+            viewMode: '2D'
+        });
+
+        // 创建飘花动画
+        function createFlower() {
+            const flower = document.createElement('div');
+            flower.className = 'flower';
+            flower.style.left = Math.random() * 100 + 'vw';
+            flower.style.animationDuration = Math.random() * 3 + 5 + 's';
+            document.body.appendChild(flower);
+            setTimeout(() => flower.remove(), 8000);
+        }
+        setInterval(createFlower, 500);
+
+        // 创建花卉标记
+        CONFIG.flowerSpots.forEach(spot => {
+            const marker = new AMap.Marker({
+                position: spot.pos,
+                content: `<div style="font-size:24px">🌸</div>`,
+                offset: new AMap.Pixel(-12, -12)
+            });
+
+            marker.on('click', () => {
+                Swal.fire({
+                    title: spot.name,
+                    html: `
+                        <p>🌸 品种：${spot.type}</p>
+                        <p>📅 花期：${spot.period}</p>
+                        <hr>
+                        <button class="swal2-btn blind-box">寻花盲盒</button>
+                    `,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        document.querySelector('.blind-box').addEventListener('click', () => {
+                            const poemIndex = Math.floor(Math.random() * CONFIG.poems[spot.type].length);
+                            const imageIndex = Math.floor(Math.random() * spot.images.length);
+                            
+                            Swal.fire({
+                                title: '诗词花语',
+                                html: `
+                                    <p>${CONFIG.poems[spot.type][poemIndex]}</p>
+                                    <img src="${spot.images[imageIndex]}" 
+                                         style="max-width: 280px; margin-top: 10px; border-radius: 8px;">
+                                `,
+                                confirmButtonText: '关闭'
+                            });
+                        });
+                    }
+                });
+            });
+
+            map.add(marker);
+        });
+
+        // 初始化引导
+        const guides = [
+            '欢迎使用南师大赏花地图！',
+            '点击地图上的花朵标记查看花卉信息',
+            '点击「寻花盲盒」发现诗词之美'
+        ];
+        
+        let currentStep = 0;
+        function showGuide() {
+            if (currentStep < guides.length) {
+                Swal.fire({
+                    title: `使用指南 (${currentStep + 1}/3)`,
+                    text: guides[currentStep],
+                    confirmButtonText: '下一步'
+                }).then(() => {
+                    currentStep++;
+                    showGuide();
+                });
+            }
+        }
+        showGuide();
+    </script>
+</body>
+
+</html>
